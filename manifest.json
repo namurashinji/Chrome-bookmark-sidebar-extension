@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Custom Bookmark Sidebar",
+  "version": "1.0",
+  "description": "ページ左端に固定表示されるカスタムブックマークサイドバー",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    },
+    "default_title": "Bookmark Sidebar をトグル"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["utils.js", "sidebar.js"],
+      "css": ["style.css"],
+      "run_at": "document_end"
+    }
+  ]
+}
