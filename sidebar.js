@@ -39,10 +39,17 @@
   function createSidebar() {
     const container = document.createElement('div');
     container.id = SIDEBAR_ID;
-    container.innerHTML = `
-      <div id="${BOOKMARK_LIST_ID}"></div>
-      <button id="add-btn" title="ブックマークを追加">＋</button>
-    `;
+
+    const list = document.createElement('div');
+    list.id = BOOKMARK_LIST_ID;
+
+    const addBtn = document.createElement('button');
+    addBtn.id = 'bks-add-btn';
+    addBtn.title = 'ブックマークを追加';
+    addBtn.textContent = '＋';
+
+    container.appendChild(list);
+    container.appendChild(addBtn);
     document.body.appendChild(container);
     return container;
   }
@@ -51,23 +58,68 @@
   function createAddPanel() {
     const panel = document.createElement('div');
     panel.id = ADD_PANEL_ID;
-    panel.innerHTML = `
-      <div id="add-panel-header">ブックマークを追加</div>
-      <div id="drop-zone">アイコン画像をここにドロップ</div>
-      <label id="file-label">
-        ファイルを選択
-        <input type="file" id="icon-input" accept="image/png,image/jpeg" />
-      </label>
-      <div id="icon-preview-wrap" class="hidden">
-        <img id="icon-preview" src="" alt="プレビュー" />
-        <button id="clear-icon-btn" title="画像をクリア">✕</button>
-      </div>
-      <input type="url" id="url-input" placeholder="https://example.com" />
-      <div id="add-panel-footer">
-        <button id="cancel-btn">キャンセル</button>
-        <button id="save-btn">保存</button>
-      </div>
-    `;
+
+    const header = document.createElement('div');
+    header.id = 'bks-add-panel-header';
+    header.textContent = 'ブックマークを追加';
+
+    const dropZone = document.createElement('div');
+    dropZone.id = 'bks-drop-zone';
+    dropZone.textContent = 'アイコン画像をここにドロップ';
+
+    const label = document.createElement('label');
+    label.id = 'bks-file-label';
+    label.textContent = 'ファイルを選択';
+
+    const iconInput = document.createElement('input');
+    iconInput.type = 'file';
+    iconInput.id = 'bks-icon-input';
+    iconInput.accept = 'image/png,image/jpeg';
+    label.appendChild(iconInput);
+
+    const previewWrap = document.createElement('div');
+    previewWrap.id = 'bks-icon-preview-wrap';
+    previewWrap.className = 'hidden';
+
+    const iconPreview = document.createElement('img');
+    iconPreview.id = 'bks-icon-preview';
+    iconPreview.src = '';
+    iconPreview.alt = 'プレビュー';
+
+    const clearIconBtn = document.createElement('button');
+    clearIconBtn.id = 'bks-clear-icon-btn';
+    clearIconBtn.title = '画像をクリア';
+    clearIconBtn.textContent = '✕';
+
+    previewWrap.appendChild(iconPreview);
+    previewWrap.appendChild(clearIconBtn);
+
+    const urlInput = document.createElement('input');
+    urlInput.type = 'url';
+    urlInput.id = 'bks-url-input';
+    urlInput.placeholder = 'https://example.com';
+
+    const footer = document.createElement('div');
+    footer.id = 'bks-add-panel-footer';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'bks-cancel-btn';
+    cancelBtn.textContent = 'キャンセル';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.id = 'bks-save-btn';
+    saveBtn.textContent = '保存';
+
+    footer.appendChild(cancelBtn);
+    footer.appendChild(saveBtn);
+
+    panel.appendChild(header);
+    panel.appendChild(dropZone);
+    panel.appendChild(label);
+    panel.appendChild(previewWrap);
+    panel.appendChild(urlInput);
+    panel.appendChild(footer);
+
     return panel;
   }
 
@@ -76,7 +128,7 @@
     menu.id = CONTEXT_MENU_ID;
     const ul = document.createElement('ul');
     const li = document.createElement('li');
-    li.id = 'delete-bookmark';
+    li.id = 'bks-delete-bookmark';
     li.textContent = '削除';
     ul.appendChild(li);
     menu.appendChild(ul);
@@ -147,7 +199,7 @@
     document.addEventListener('click', e => {
       if (!menu.contains(e.target)) menu.style.display = 'none';
     });
-    menu.querySelector('#delete-bookmark').addEventListener('click', () => handleDelete(menu, container));
+    menu.querySelector('#bks-delete-bookmark').addEventListener('click', () => handleDelete(menu, container));
 
     // 追加パネル
     setupAddPanel(container, addPanel);
@@ -274,24 +326,20 @@
     });
   }
 
-  // ─── 追加パネル ─────────────────────────────────────────────────────────
+  // ─── パネル状態管理 ─────────────────────────────────────────────────────
 
-  function setupAddPanel(container, panel) {
-    const addBtn       = container.querySelector('#add-btn');
-    const dropZone     = panel.querySelector('#drop-zone');
-    const iconInput    = panel.querySelector('#icon-input');
-    const previewWrap  = panel.querySelector('#icon-preview-wrap');
-    const iconPreview  = panel.querySelector('#icon-preview');
-    const clearIconBtn = panel.querySelector('#clear-icon-btn');
-    const urlInput     = panel.querySelector('#url-input');
-    const cancelBtn    = panel.querySelector('#cancel-btn');
-    const saveBtn      = panel.querySelector('#save-btn');
+  // パネルの表示・非表示・アイコン操作のクロージャを生成する
+  function initPanelState(panel) {
+    const previewWrap = panel.querySelector('#bks-icon-preview-wrap');
+    const iconPreview = panel.querySelector('#bks-icon-preview');
+    const iconInput   = panel.querySelector('#bks-icon-input');
+    const urlInput    = panel.querySelector('#bks-url-input');
 
     let selectedDataURL = null;
 
-    const showPanel = () => panel.classList.add('visible');
+    const show = () => panel.classList.add('visible');
 
-    const hidePanel = () => {
+    const hide = () => {
       panel.classList.remove('visible');
       selectedDataURL   = null;
       iconInput.value   = '';
@@ -300,7 +348,6 @@
       previewWrap.classList.add('hidden');
     };
 
-    // ファイルを受け取りプレビューに反映する
     const applyFile = async (file) => {
       if (!file) return;
       if (!file.type.startsWith('image/')) {
@@ -320,8 +367,33 @@
       }
     };
 
-    addBtn.addEventListener('click', showPanel);
-    cancelBtn.addEventListener('click', hidePanel);
+    const clearIcon = () => {
+      selectedDataURL = null;
+      iconInput.value = '';
+      iconPreview.src = '';
+      previewWrap.classList.add('hidden');
+    };
+
+    return { show, hide, applyFile, clearIcon, getDataURL: () => selectedDataURL };
+  }
+
+  // ─── 追加パネル ─────────────────────────────────────────────────────────
+
+  function setupAddPanel(container, panel) {
+    const addBtn       = container.querySelector('#bks-add-btn');
+    const dropZone     = panel.querySelector('#bks-drop-zone');
+    const iconInput    = panel.querySelector('#bks-icon-input');
+    const urlInput     = panel.querySelector('#bks-url-input');
+    const cancelBtn    = panel.querySelector('#bks-cancel-btn');
+    const saveBtn      = panel.querySelector('#bks-save-btn');
+    const clearIconBtn = panel.querySelector('#bks-clear-icon-btn');
+
+    const { show, hide, applyFile, clearIcon, getDataURL } = initPanelState(panel);
+
+    addBtn.addEventListener('click', show);
+    cancelBtn.addEventListener('click', hide);
+    clearIconBtn.addEventListener('click', clearIcon);
+    iconInput.addEventListener('change', async () => applyFile(iconInput.files[0]));
 
     dropZone.addEventListener('dragover', e => {
       e.preventDefault();
@@ -334,35 +406,25 @@
       await applyFile(e.dataTransfer.files[0]);
     });
 
-    iconInput.addEventListener('change', async () => await applyFile(iconInput.files[0]));
-
-    clearIconBtn.addEventListener('click', () => {
-      selectedDataURL = null;
-      iconInput.value = '';
-      iconPreview.src = '';
-      previewWrap.classList.add('hidden');
-    });
-
     saveBtn.addEventListener('click', async () => {
-      const url = urlInput.value.trim();
+      const url    = urlInput.value.trim();
+      const dataURL = getDataURL();
 
-      if (!selectedDataURL) return alert('アイコン画像を選択してください');
+      if (!dataURL)         return alert('アイコン画像を選択してください');
       if (!url)             return alert('URLを入力してください');
       if (!isValidURL(url)) return alert('有効なURL（http:// または https://）を入力してください');
 
       try {
         const { [STORAGE_BOOKMARKS]: bookmarks = [] } = await getStorage({ [STORAGE_BOOKMARKS]: [] });
-
         if (bookmarks.length >= MAX_BOOKMARKS) {
           return alert(`登録上限（${MAX_BOOKMARKS}個）に達しています`);
         }
         if (bookmarks.some(b => b.url === url)) {
           return alert('同じURLはすでに登録されています');
         }
-
-        const updated = appendItem(bookmarks, { icon: selectedDataURL, url });
+        const updated = appendItem(bookmarks, { icon: dataURL, url });
         await setStorage({ [STORAGE_BOOKMARKS]: updated });
-        hidePanel();
+        hide();
         await render(container);
       } catch {
         alert('保存に失敗しました。ストレージの空き容量が不足している可能性があります');

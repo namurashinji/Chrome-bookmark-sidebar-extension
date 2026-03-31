@@ -9,7 +9,25 @@ Chrome拡張機能「Custom Bookmark Sidebar」の開発引き継ぎ資料。
 
 - **バージョン**: 1.0
 - **動作確認**: Chrome（Manifest V3）
-- **テスト**: Jest によるユニットテストあり（`utils.js`, `background.js` の純粋関数部分）
+- **テスト**: Jest によるユニットテストあり（`utils.js`, `background.js` の純粋関数部分）、テスト数: 51件
+
+## 直近の変更履歴（2026-03-31 コードレビュー修正）
+
+セキュリティ・品質レビューに基づく修正を実施。
+
+| 対象ファイル | 変更内容 |
+|---|---|
+| `utils.js` | `moveItem`: `splice` → `slice` + スプレッド構文に変更（内部ミューテーション排除） |
+| `utils.js` | `removeAtIndex`: 負数・範囲外インデックスのガード追加 |
+| `utils.js` | `ALLOWED_PROTOCOLS` に意図的重複の説明コメント追加 |
+| `background.js` | `getOriginPrefix`, `chooseMostRecentTab` を独立関数として抽出 |
+| `background.js` | `chrome.runtime.onMessage.addListener` を `typeof chrome` ガードで囲み、Node.js 環境でも `require` 可能に |
+| `background.js` | `module.exports` を追加（テスト環境でのエクスポート対応） |
+| `sidebar.js` | DOM生成を `innerHTML` → `createElement` + `appendChild` に統一（XSS将来リスク排除） |
+| `sidebar.js` | `setupAddPanel`（93行）を `initPanelState` + `setupAddPanel` に分割（各50行以内） |
+| `sidebar.js` / `style.css` | 汎用ID名に `bks-` プレフィックスを付与（ページとのID衝突リスク排除） |
+| `tests/background.test.js` | `isAllowedURL` 等の再実装を削除し、`require('../background')` に統一 |
+| `tests/utils.test.js` | `removeAtIndex` の境界値テストを追加 |
 
 ## アーキテクチャ
 

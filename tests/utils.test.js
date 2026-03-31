@@ -85,6 +85,14 @@ describe('removeAtIndex', () => {
       { url: 'https://c.com', icon: 'data:c' },
     ]);
   });
+
+  test('負のインデックスは元配列のコピーを返す', () => {
+    expect(removeAtIndex(['a', 'b', 'c'], -1)).toEqual(['a', 'b', 'c']);
+  });
+
+  test('範囲外インデックスは元配列のコピーを返す', () => {
+    expect(removeAtIndex(['a', 'b', 'c'], 99)).toEqual(['a', 'b', 'c']);
+  });
 });
 
 // ─── moveItem ────────────────────────────────────────────────────────────────

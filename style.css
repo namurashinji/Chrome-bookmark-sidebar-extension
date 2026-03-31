@@ -59,7 +59,7 @@
    追加ボタン（サイドバー下部）
 ═══════════════════════════════════════ */
 
-#add-btn {
+#bks-add-btn {
   width: 100%;
   border: none;
   background: rgba(0, 0, 0, 0.08);
@@ -71,7 +71,7 @@
   transition: background 0.15s;
 }
 
-#add-btn:hover {
+#bks-add-btn:hover {
   background: rgba(0, 0, 0, 0.16);
 }
 
@@ -101,7 +101,7 @@
   display: flex;
 }
 
-#add-panel-header {
+#bks-add-panel-header {
   font-size: 14px;
   font-weight: bold;
   color: #333;
@@ -112,7 +112,7 @@
 
 /* ドロップゾーン */
 
-#drop-zone {
+#bks-drop-zone {
   border: 2px dashed #c8b9a8;
   border-radius: 6px;
   padding: 18px 8px;
@@ -124,7 +124,7 @@
   user-select: none;
 }
 
-#drop-zone.dragover {
+#bks-drop-zone.dragover {
   border-color: #8a7a6a;
   background: #f0ebe4;
   color: #666;
@@ -132,7 +132,7 @@
 
 /* ファイル選択ラベル */
 
-#file-label {
+#bks-file-label {
   display: block;
   background: #f0ebe5;
   border: 1px solid #c8b9a8;
@@ -145,17 +145,17 @@
   transition: background 0.15s;
 }
 
-#file-label:hover {
+#bks-file-label:hover {
   background: #e8e0d8;
 }
 
-#file-label input[type="file"] {
+#bks-file-label input[type="file"] {
   display: none;
 }
 
 /* アイコンプレビュー */
 
-#icon-preview-wrap {
+#bks-icon-preview-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -165,11 +165,11 @@
   border-radius: 4px;
 }
 
-#icon-preview-wrap.hidden {
+#bks-icon-preview-wrap.hidden {
   display: none;
 }
 
-#icon-preview {
+#bks-icon-preview {
   width: 40px;
   height: 40px;
   object-fit: contain;
@@ -177,7 +177,7 @@
   flex-shrink: 0;
 }
 
-#clear-icon-btn {
+#bks-clear-icon-btn {
   border: none;
   background: rgba(0, 0, 0, 0.08);
   border-radius: 50%;
@@ -195,13 +195,13 @@
   transition: background 0.15s;
 }
 
-#clear-icon-btn:hover {
+#bks-clear-icon-btn:hover {
   background: rgba(0, 0, 0, 0.16);
 }
 
 /* URL入力欄 */
 
-#url-input {
+#bks-url-input {
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
@@ -214,14 +214,14 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-#url-input:focus {
+#bks-url-input:focus {
   border-color: #8a7a6a;
   box-shadow: 0 0 0 2px rgba(138, 122, 106, 0.15);
 }
 
 /* パネルフッター（キャンセル・保存） */
 
-#add-panel-footer {
+#bks-add-panel-footer {
   display: flex;
   gap: 8px;
   margin-top: auto;
@@ -229,8 +229,8 @@
   border-top: 1px solid #ece7e1;
 }
 
-#cancel-btn,
-#save-btn {
+#bks-cancel-btn,
+#bks-save-btn {
   flex: 1;
   padding: 8px;
   border-radius: 4px;
@@ -240,21 +240,21 @@
   transition: background 0.15s;
 }
 
-#cancel-btn {
+#bks-cancel-btn {
   background: #f0ebe5;
   color: #555;
 }
 
-#cancel-btn:hover {
+#bks-cancel-btn:hover {
   background: #e8e0d8;
 }
 
-#save-btn {
+#bks-save-btn {
   background: #8a7a6a;
   color: #fff;
 }
 
-#save-btn:hover {
+#bks-save-btn:hover {
   background: #6a5a4a;
 }
 
@@ -279,7 +279,7 @@
   list-style: none;
 }
 
-#delete-bookmark {
+#bks-delete-bookmark {
   padding: 6px 18px;
   cursor: pointer;
   font-size: 13px;
@@ -287,6 +287,6 @@
   transition: background 0.15s;
 }
 
-#delete-bookmark:hover {
+#bks-delete-bookmark:hover {
   background: #fff0f0;
 }

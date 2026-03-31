@@ -1,18 +1,7 @@
 // background.js の純粋なロジック部分をテスト
-// Chrome API に依存しない部分のみを抽出して検証する
+const { isAllowedURL, getOriginPrefix, chooseMostRecentTab } = require('../background');
 
-// ─── isAllowedURL（background.js から抽出）──────────────────────────────────
-
-const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
-
-function isAllowedURL(url) {
-  try {
-    const parsed = new URL(url);
-    return ALLOWED_PROTOCOLS.has(parsed.protocol);
-  } catch {
-    return false;
-  }
-}
+// ─── isAllowedURL ────────────────────────────────────────────────────────────
 
 describe('isAllowedURL（background.js）', () => {
   test('https:// は許可', () => {
@@ -48,17 +37,7 @@ describe('isAllowedURL（background.js）', () => {
   });
 });
 
-// ─── タブのオリジン一致ロジック ───────────────────────────────────────────────
-
-// background.js が使っているオリジン比較ロジックを関数として抽出してテスト
-function getOriginPrefix(url) {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol + '//' + parsed.host;
-  } catch {
-    return null;
-  }
-}
+// ─── getOriginPrefix ─────────────────────────────────────────────────────────
 
 describe('タブのオリジン一致ロジック', () => {
   test('同じオリジンのURLはマッチする', () => {
@@ -95,14 +74,7 @@ describe('タブのオリジン一致ロジック', () => {
   });
 });
 
-// ─── 最近アクセスしたタブを選択するロジック ──────────────────────────────────
-
-// background.js の reduce による lastAccessed 比較を単体テスト
-function chooseMostRecentTab(tabs) {
-  return tabs.reduce((best, t) =>
-    (t.lastAccessed || 0) > (best.lastAccessed || 0) ? t : best
-  );
-}
+// ─── chooseMostRecentTab ──────────────────────────────────────────────────────
 
 describe('最近アクセスしたタブの選択', () => {
   test('lastAccessed が最大のタブを返す', () => {

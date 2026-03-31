@@ -1,5 +1,8 @@
 // utils.js - 共通ユーティリティ（テスト可能な純粋関数）
 
+// ALLOWED_PROTOCOLS は background.js にも同一定義がある。
+// Chrome Extension のスコープ分離により共有できないため意図的な重複。
+// 変更時は background.js も合わせて更新すること。
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 /**
@@ -23,6 +26,7 @@ function isValidURL(url) {
  * @returns {Array}
  */
 function removeAtIndex(arr, idx) {
+  if (idx < 0 || idx >= arr.length) return [...arr];
   return [...arr.slice(0, idx), ...arr.slice(idx + 1)];
 }
 
@@ -34,10 +38,8 @@ function removeAtIndex(arr, idx) {
  * @returns {Array}
  */
 function moveItem(arr, from, to) {
-  const copy = [...arr];
-  const [item] = copy.splice(from, 1);
-  copy.splice(to, 0, item);
-  return copy;
+  const without = [...arr.slice(0, from), ...arr.slice(from + 1)];
+  return [...without.slice(0, to), arr[from], ...without.slice(to)];
 }
 
 /**
