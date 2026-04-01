@@ -21,7 +21,7 @@
 | `Ctrl+Shift+S` | ブックマーク2番目を開く |
 | `Ctrl+Shift+D` | ブックマーク3番目を開く |
 | `Ctrl+Shift+F` | ブックマーク4番目を開く |
-| `Ctrl+Shift+G` | ブックマーク5番目を開く |
+| `Ctrl+Shift+G` | ブックマーク5番目を開く ※要手動設定 |
 | `Ctrl+Shift++` | サイドバーを完全表示（不透明度100%） |
 | `Ctrl+Shift+-` | サイドバーを半透明表示（不透明度75%） |
 
@@ -55,6 +55,8 @@ Chrome-bookmark-sidebar-extension/
 │   └── background.test.js
 └── package.json         # テスト設定
 ```
+
+> ※ `Ctrl+Shift+G`（ブックマーク5番目）は Chrome の拡張機能コマンド上限（4つ）のため、`chrome://extensions/shortcuts` で手動設定が必要です。
 
 ## テストの実行
 

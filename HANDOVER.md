@@ -11,6 +11,19 @@ Chrome拡張機能「Custom Bookmark Sidebar」の開発引き継ぎ資料。
 - **動作確認**: Chrome（Manifest V3）
 - **テスト**: Jest によるユニットテストあり（`utils.js`, `background.js` の純粋関数部分）、テスト数: 51件
 
+## 直近の変更履歴（2026-04-01 キーボードショートカット修正）
+
+Chrome 組み込みショートカットとの競合により `Ctrl+Shift+A/S/D/F/G` が動作しなかった問題を修正。
+
+| 対象ファイル | 変更内容 |
+|---|---|
+| `manifest.json` | `commands` セクションを追加。`open-bookmark-1〜4` に `suggested_key` を設定。`open-bookmark-5` は Chrome の4コマンド上限のため `suggested_key` なし（ユーザーが手動設定） |
+| `background.js` | `chrome.commands.onCommand` ハンドラを追加。ブックマーク開閉ロジックは既存の `getOriginPrefix` / `chooseMostRecentTab` を再利用 |
+
+**根本原因**: `Ctrl+Shift+A`（Search Tabs）等は Chrome がブラウザレベルで先取りするため、content script の `keydown` リスナーに届かない。`manifest.json` に `commands` を定義することで拡張機能コマンドが優先される。
+
+---
+
 ## 直近の変更履歴（2026-03-31 コードレビュー修正）
 
 セキュリティ・品質レビューに基づく修正を実施。
@@ -88,9 +101,13 @@ MV3 の Service Worker は非活動時に停止する。
 `init()` 関数の冒頭で `document.getElementById(SIDEBAR_ID)` の存在チェックを行い、重複実行を防止している。
 ただし、SPA が DOM を完全に再構築する場合（React の root 置き換えなど）はサイドバーが消える可能性がある。未対応。
 
-### キーボードショートカットの競合
-`document.addEventListener('keydown', ..., true)` の `capture: true` により、ページ側リスナーより先に実行される。
-一部の Web アプリ（Google Docs, Notion 等）でショートカットが競合する可能性がある。
+### キーボードショートカットの実装方式
+
+ブックマークを開く `Ctrl+Shift+A/S/D/F/G` は `manifest.json` の `commands` で定義し、`background.js` の `chrome.commands.onCommand` で処理する。Chrome 組み込みショートカットより拡張機能コマンドが優先されるため競合しない。
+
+トグル（`` Ctrl+Shift+` ``）・不透明度変更は backtick など `commands` で使用できないキーのため、引き続き content script の `keydown` リスナー（`capture: true`）で処理する。一部の Web アプリ（Google Docs, Notion 等）でこちらが競合する可能性がある。
+
+Chrome の `commands` には `suggested_key` を持てるコマンドが最大4つという制限がある。5番目のブックマーク（`Ctrl+Shift+G`）はユーザーが `chrome://extensions/shortcuts` で手動設定する必要がある。
 
 ## 今後の改善候補（優先度順）
 

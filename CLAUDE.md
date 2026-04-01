@@ -60,18 +60,25 @@ npm run test:coverage # カバレッジ確認
 
 ## キーボードショートカット仕様（変更時は要注意）
 
-| ショートカット | 動作 |
-|---|---|
-| `Ctrl+Shift+\`` | サイドバーの表示/非表示トグル |
-| `Ctrl+Shift+A` | ブックマーク 1番目を開く |
-| `Ctrl+Shift+S` | ブックマーク 2番目を開く |
-| `Ctrl+Shift+D` | ブックマーク 3番目を開く |
-| `Ctrl+Shift+F` | ブックマーク 4番目を開く |
-| `Ctrl+Shift+G` | ブックマーク 5番目を開く |
-| `Ctrl+Shift++` | 不透明度 100% |
-| `Ctrl+Shift+-` | 不透明度 75% |
+| ショートカット | 動作 | 実装方式 |
+|---|---|---|
+| `Ctrl+Shift+\`` | サイドバーの表示/非表示トグル | content script keydown |
+| `Ctrl+Shift+A` | ブックマーク 1番目を開く | manifest commands |
+| `Ctrl+Shift+S` | ブックマーク 2番目を開く | manifest commands |
+| `Ctrl+Shift+D` | ブックマーク 3番目を開く | manifest commands |
+| `Ctrl+Shift+F` | ブックマーク 4番目を開く | manifest commands |
+| `Ctrl+Shift+G` | ブックマーク 5番目を開く | manifest commands（要手動設定） |
+| `Ctrl+Shift++` | 不透明度 100% | content script keydown |
+| `Ctrl+Shift+-` | 不透明度 75% | content script keydown |
 
-ショートカットはページ側リスナーより先に実行するため `capture: true` を使用している。変更時はページとの競合に注意。
+### 実装方式の使い分け
+
+- **manifest commands（`manifest.json` の `commands` セクション）**: `Ctrl+Shift+A/S/D` など Chrome 組み込みショートカットと重複するキーに使用。拡張機能コマンドは Chrome 自身のショートカットより優先され、`background.js` の `chrome.commands.onCommand` で処理される。
+- **content script keydown**: backtick（ `` ` ``）は `manifest.json` の `commands` で使用できないキーのため、`capture: true` の DOM イベントリスナーで処理。
+
+### Chrome の4コマンド制限
+
+`manifest.json` の `commands` に `suggested_key` を設定できるのは最大4つ。5番目（`Ctrl+Shift+G`）は `suggested_key` なしで定義しており、ユーザーが `chrome://extensions/shortcuts` で手動設定する必要がある。
 
 ## タブ制御の仕様（background.js）
 

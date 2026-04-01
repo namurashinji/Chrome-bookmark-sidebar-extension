@@ -76,6 +76,48 @@ if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
   });
 }
 
+// manifest.json の commands からブックマークを直接開くハンドラ。
+// content script の keydown リスナーでは Chrome 組み込みショートカット
+//（Ctrl+Shift+A = Search Tabs 等）に先取りされて動作しないため、
+// 拡張機能コマンドとして登録することで優先度を確保している。
+if (typeof chrome !== 'undefined' && chrome.commands?.onCommand) {
+  const BOOKMARK_COMMAND_IDX = {
+    'open-bookmark-1': 0,
+    'open-bookmark-2': 1,
+    'open-bookmark-3': 2,
+    'open-bookmark-4': 3,
+    'open-bookmark-5': 4,
+  };
+
+  chrome.commands.onCommand.addListener((command) => {
+    const idx = BOOKMARK_COMMAND_IDX[command];
+    if (idx == null) return;
+
+    chrome.storage.local.get({ bookmarks: [] }, (result) => {
+      if (chrome.runtime.lastError) return;
+
+      const b = (result.bookmarks || [])[idx];
+      if (!b?.url || !isAllowedURL(b.url)) return;
+
+      const targetPrefix = getOriginPrefix(b.url);
+      if (!targetPrefix) return;
+
+      chrome.tabs.query({}, (tabs) => {
+        const matchedTabs = tabs.filter(tab => getOriginPrefix(tab.url) === targetPrefix);
+
+        if (matchedTabs.length > 0) {
+          const chosen = chooseMostRecentTab(matchedTabs);
+          chrome.windows.update(chosen.windowId, { focused: true }, () => {
+            chrome.tabs.update(chosen.id, { active: true });
+          });
+        } else {
+          chrome.tabs.create({ url: b.url, active: true });
+        }
+      });
+    });
+  });
+}
+
 // Node.js（テスト環境）向けに純粋ロジックのみエクスポートする。
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { isAllowedURL, getOriginPrefix, chooseMostRecentTab };

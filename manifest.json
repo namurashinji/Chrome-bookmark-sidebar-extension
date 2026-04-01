@@ -30,5 +30,26 @@
       "css": ["style.css"],
       "run_at": "document_end"
     }
-  ]
+  ],
+  "commands": {
+    "open-bookmark-1": {
+      "suggested_key": { "default": "Ctrl+Shift+A" },
+      "description": "ブックマーク1番目を開く"
+    },
+    "open-bookmark-2": {
+      "suggested_key": { "default": "Ctrl+Shift+S" },
+      "description": "ブックマーク2番目を開く"
+    },
+    "open-bookmark-3": {
+      "suggested_key": { "default": "Ctrl+Shift+D" },
+      "description": "ブックマーク3番目を開く"
+    },
+    "open-bookmark-4": {
+      "suggested_key": { "default": "Ctrl+Shift+F" },
+      "description": "ブックマーク4番目を開く"
+    },
+    "open-bookmark-5": {
+      "description": "ブックマーク5番目を開く（chrome://extensions/shortcuts で手動設定）"
+    }
+  }
 }
