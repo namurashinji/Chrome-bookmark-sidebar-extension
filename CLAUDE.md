@@ -1,93 +1,147 @@
 # CLAUDE.md — Chrome Bookmark Sidebar Extension
 
-## プロジェクト概要
+> Chrome 拡張機能「Custom Bookmark Sidebar」の **仕様と規律** を集約する。
+> 現在の状態・変更履歴は `HANDOVER.md`、開発計画・意思決定は `PLAN.md`、ユーザー向け情報は `README.md` を参照。
 
-すべての HTTP/HTTPS ページの左端に固定表示される50px幅のカスタムブックマークサイドバー（Chrome拡張機能）。
-Manifest V3 準拠。フレームワーク不使用の純粋な JavaScript 実装。
+---
 
-## ファイル構成と役割
+## システム構成
 
 ```
-Chrome-bookmark-sidebar-extension/
-├── manifest.json        # 拡張機能メタ情報・パーミッション定義（MV3）
-├── background.js        # サービスワーカー：URLを受け取りタブ制御
-├── sidebar.js           # コンテンツスクリプト：UI全体の生成・制御
-├── utils.js             # 純粋関数のみ（isValidURL, removeAtIndex, moveItem, appendItem）
-├── style.css            # サイドバー・アイコン・パネルのスタイル
-├── tests/
-│   ├── utils.test.js    # utils.js のユニットテスト
-│   └── background.test.js # background.js のユニットテスト
-└── package.json         # Jest 設定
+┌─────────────────────────────────────────────┐
+│ ブラウザページ（全 HTTP/HTTPS ページ）      │
+│                                             │
+│  ┌────────────┐        ┌────────────────┐  │
+│  │ sidebar.js │──msg──▶│ background.js  │  │
+│  │（UI・制御）│        │（タブ制御 SW） │  │
+│  └────────────┘        └────────────────┘  │
+│         │                                  │
+│         ▼                                  │
+│  ┌────────────┐                            │
+│  │ utils.js   │                            │
+│  │（純粋関数）│                            │
+│  └────────────┘                            │
+└─────────────────────────────────────────────┘
+         │
+         ▼
+  chrome.storage.local
+  ┌───────────────────────────┐
+  │ bookmarks: [{icon, url}]  │  ← アイコンは Base64 Data URL
+  │ sidebarVisible: boolean   │
+  └───────────────────────────┘
 ```
 
-## 重要な設計上の制約
+---
 
-### Chrome Extension 特有の制約
-- **Manifest V3 必須**: background は service_worker のみ（persistent background page 不可）
-- **Content Script のスコープ**: `sidebar.js` は全ページに注入される。グローバル汚染を避けるため IIFE で包むこと
-- **IIFE 内の chrome API**: `utils.js` のユーティリティ関数は Chrome API を含まない純粋関数として実装し、テスト可能性を保つこと
-- **iframe ガード**: クロスオリジン iframe では `window.top` アクセスが例外を投げるため、`sidebar.js` 冒頭の try/catch ガードを必ず維持する
+## ファイル構成と責務
+
+| ファイル | 役割 | 特記事項 |
+|---|---|---|
+| `manifest.json` | 拡張機能メタ情報 | MV3。パーミッション: `storage`, `tabs` |
+| `background.js` | Service Worker | URL を受け取り、同一オリジンのタブを再利用または新規作成 |
+| `sidebar.js` | コンテンツスクリプト | IIFE でグローバル汚染防止。DOM 生成・イベント管理・Storage 操作 |
+| `utils.js` | ユーティリティ | Chrome API 非依存の純粋関数（`isValidURL` / `removeAtIndex` / `moveItem` / `appendItem`）。Node.js（Jest）でそのまま動く |
+| `style.css` | スタイル | `z-index: 2147483647`（最前面）。サイドバー・アイコン・追加パネル |
+| `tests/utils.test.js` | ユニットテスト | `utils.js` の純粋関数 |
+| `tests/background.test.js` | ユニットテスト | `background.js` の `isAllowedURL` |
+
+---
+
+## データ構造（chrome.storage.local）
+
+```javascript
+// ブックマーク一覧
+bookmarks: [
+  {
+    icon: "data:image/png;base64,...",  // Base64 Data URL（最大 300KB）
+    url:  "https://example.com"          // http/https のみ許可
+  },
+  // ... 最大12件
+]
+
+// サイドバーの表示状態
+sidebarVisible: true   // boolean、デフォルト: true
+```
+
+---
+
+## Chrome 拡張特有の制約
+
+### Manifest V3
+- background は `service_worker` のみ（persistent background page 不可）
+- Service Worker は非活動時に停止する。`chrome.runtime.sendMessage` が失敗した場合、`sidebar.js` 内で `window.open` にフォールバックする実装済み
+
+### Content Script のスコープ
+- `sidebar.js` は全ページに注入される。グローバル汚染を避けるため **IIFE で包む**
+- `utils.js` は Chrome API を含まない純粋関数として実装し、Jest でテスト可能にする
+
+### iframe ガード（削除禁止）
+`sidebar.js` 冒頭で `window !== window.top` を判定し、iframe 内では実行しない。クロスオリジン iframe では `window.top` アクセスが例外を投げるため、必ず `try/catch` で囲むこと。削除すると iframe を多用するページ（YouTube 等）でサイドバーが重複表示される。
 
 ### Storage 制約
-- `chrome.storage.local` を使用（最大 5MB）
+- `chrome.storage.local` は **最大 5MB**
 - アイコンを Base64 Data URL で保存するため、12件 × 300KB = 最大 3.6MB になりうる
-- Storage 容量エラーは必ずユーザーに通知すること
+- 容量超過時は必ずユーザーに通知する
 
-### セキュリティ上の注意
-- `background.js` で `javascript:`, `file:` 等の不正プロトコルを必ずブロックすること（`isAllowedURL` 関数）
-- `utils.js` の `isValidURL` も同様に http/https のみ許可
+### セキュリティ
+- `background.js` の `isAllowedURL`、`utils.js` の `isValidURL` の両方で **http/https のみ許可**（`javascript:` / `file:` 等をブロック）
 - アイコン画像は Data URL 化して保存するため、外部サーバーへのリクエストは発生しない
 
-## コーディング規約（このプロジェクト固有）
+### SPA 対応
+`init()` 冒頭で `document.getElementById(SIDEBAR_ID)` の存在チェックを行い重複挿入を防止。ただし React の root 置き換えなど DOM 完全再構築には未対応（改善候補は `PLAN.md`）。
 
-- **JavaScript のみ**（TypeScript 不使用 — Chrome Extension の直接読み込みのため）
+---
+
+## コーディング規約（本プロジェクト固有）
+
+- **JavaScript のみ**（TypeScript 不使用 — Chrome Extension の直接読み込み形式のため）
 - **関数ベース**（class 不使用）
 - **イミュータブル操作**: `utils.js` の配列操作は必ず新しい配列を返し、元配列を変更しない
-- コメントは日本語で記載
+- コメントは日本語
 - `const` / `let` を使用、`var` 禁止
 
-## テスト
+---
 
-```bash
-npm test             # 全テスト実行
-npm run test:watch   # ウォッチモード
-npm run test:coverage # カバレッジ確認
-```
-
-- テストは `tests/` ディレクトリに配置
-- テスト対象: `utils.js`（純粋関数）、`background.js`（`isAllowedURL` 関数）
-- `sidebar.js` は DOM 依存が強く Jest では直接テスト困難 → 手動確認が主
-
-## キーボードショートカット仕様（変更時は要注意）
+## キーボードショートカット仕様
 
 | ショートカット | 動作 | 実装方式 |
 |---|---|---|
-| `Ctrl+Shift+\`` | サイドバーの表示/非表示トグル | content script keydown |
-| `Ctrl+Shift+A` | ブックマーク 1番目を開く | manifest commands |
-| `Ctrl+Shift+S` | ブックマーク 2番目を開く | manifest commands |
-| `Ctrl+Shift+D` | ブックマーク 3番目を開く | manifest commands |
-| `Ctrl+Shift+F` | ブックマーク 4番目を開く | manifest commands |
-| `Ctrl+Shift+G` | ブックマーク 5番目を開く | manifest commands（要手動設定） |
+| `` Ctrl+Shift+` `` | サイドバー表示/非表示トグル | content script keydown |
+| `Ctrl+Shift+A` | ブックマーク 1 番目を開く | manifest commands |
+| `Ctrl+Shift+S` | ブックマーク 2 番目を開く | manifest commands |
+| `Ctrl+Shift+D` | ブックマーク 3 番目を開く | manifest commands |
+| `Ctrl+Shift+F` | ブックマーク 4 番目を開く | manifest commands |
+| `Ctrl+Shift+G` | ブックマーク 5 番目を開く | manifest commands（**要手動設定**） |
 | `Ctrl+Shift++` | 不透明度 100% | content script keydown |
 | `Ctrl+Shift+-` | 不透明度 75% | content script keydown |
 
 ### 実装方式の使い分け
 
-- **manifest commands（`manifest.json` の `commands` セクション）**: `Ctrl+Shift+A/S/D` など Chrome 組み込みショートカットと重複するキーに使用。拡張機能コマンドは Chrome 自身のショートカットより優先され、`background.js` の `chrome.commands.onCommand` で処理される。
-- **content script keydown**: backtick（ `` ` ``）は `manifest.json` の `commands` で使用できないキーのため、`capture: true` の DOM イベントリスナーで処理。
+- **manifest commands**（`manifest.json` の `commands` セクション）: `Ctrl+Shift+A/S/D/F` など Chrome 組み込みショートカット（Search Tabs 等）と重複するキーに使用。拡張機能コマンドは Chrome 組み込みより優先され、`background.js` の `chrome.commands.onCommand` で処理される
+- **content script keydown**: backtick（`` ` ``）は `manifest.json` の `commands` で使えないキーのため、`capture: true` の DOM リスナーで処理。一部の Web アプリ（Google Docs, Notion 等）と競合する可能性あり
 
 ### Chrome の4コマンド制限
 
-`manifest.json` の `commands` に `suggested_key` を設定できるのは最大4つ。5番目（`Ctrl+Shift+G`）は `suggested_key` なしで定義しており、ユーザーが `chrome://extensions/shortcuts` で手動設定する必要がある。
+`manifest.json` の `commands` に `suggested_key` を設定できるのは **最大4つ**。5番目の `Ctrl+Shift+G` は `suggested_key` なしで定義しており、ユーザーが `chrome://extensions/shortcuts` で手動設定する必要がある。
 
-## タブ制御の仕様（background.js）
+---
 
-URLを開く際、**同一オリジン（プロトコル＋ホスト名）のタブが既存の場合はそのタブをフォーカス**する（最後にアクセスしたタブを優先）。存在しない場合のみ新規タブを作成する。
+## タブ制御仕様（background.js）
 
-Service Worker が休眠中の場合、`sidebar.js` 内で `window.open` にフォールバックする。
+URL を開く際、**同一オリジン（プロトコル+ホスト名）のタブが既存の場合は最後にアクセスしたタブをフォーカス** する。存在しない場合のみ新規タブを作成。
 
-## インストール方法（開発時）
+Service Worker 休眠中は `sidebar.js` 内で `window.open` にフォールバック。
 
-1. `chrome://extensions/` → デベロッパーモードON
-2. 「パッケージ化されていない拡張機能を読み込む」→ このディレクトリを選択
-3. コードを変更した場合は拡張機能ページの「更新」ボタンを押す
+---
+
+## テスト
+
+```bash
+npm test              # 全テスト実行
+npm run test:watch    # ウォッチモード
+npm run test:coverage # カバレッジ確認
+```
+
+- テストは `tests/` 配下に配置
+- 対象: `utils.js`（純粋関数）、`background.js`（`isAllowedURL` 関数）
+- `sidebar.js` は DOM 依存が強く Jest では直接テスト困難 → 手動確認が主
