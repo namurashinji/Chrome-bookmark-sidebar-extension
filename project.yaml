@@ -5,4 +5,4 @@ status: active
 machine: macbook-pro-2024
 stack: [javascript, chrome-extension, jest]
 entrypoint: "manifest.json（Manifest V3）"
-summary_source: ai
+summary_source: human
