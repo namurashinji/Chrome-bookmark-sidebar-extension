@@ -24,7 +24,7 @@
 | Phase 1 | 初期実装（manifest / sidebar / background / utils / style / tests 一式） | ✅ 完了 | 2026-03-31 |
 | Phase 2 | セキュリティ・品質レビュー修正（XSS リスク排除・ID 衝突防止・ミューテーション排除ほか） | ✅ 完了 | 2026-03-31 |
 | Phase 3 | キーボードショートカット修正（manifest commands 移行） | ✅ 完了 | 2026-04-01 |
-| Phase 4 | サイドパネル型に作り直し・Mac のショートカット修正（MacCtrl） | 🔄 実装済み・実機確認待ち | — |
+| Phase 4 | サイドパネル型に作り直し・Mac のショートカット修正（MacCtrl）・並べ替えの修正 | ✅ 完了 | 2026-10-13 |
 
 各 Phase の具体的な変更内容は `HANDOVER.md` の「変更履歴」を参照。
 
