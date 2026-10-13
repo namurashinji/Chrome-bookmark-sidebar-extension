@@ -11,10 +11,12 @@
 
 | 項目 | 内容 |
 |---|---|
-| バージョン | 1.0 |
-| 動作確認 | Chrome（Manifest V3） |
-| テスト | Jest ユニットテスト 51 件 PASS（`utils.js` / `background.js` の純粋関数部分） |
-| 未対応 | SPA の DOM 完全再構築対応（React root 置き換え等）、`Ctrl+Shift+G` の自動設定 |
+| バージョン | 2.0（サイドパネル型） |
+| 動作確認 | Chrome 141 以上（Manifest V3）。開発機は Chrome 155 |
+| テスト | Jest ユニットテスト 66 件 PASS（`utils.js` / `background.js` の純粋関数部分） |
+| 実機確認 | 2026-10-13 一部完了: ショートカットでの開閉、1分放置後の開閉（手順9）、2ウィンドウでの独立した開閉（手順8）。**未報告**: Google Docs 等でのブックマーク起動（手順5）、タブ再利用（6）、追加・削除・並べ替え（7）、最小幅（10） |
+| ショートカット（名村さんの環境） | 手動設定: 開閉 ⌃⇧A、ブックマーク1〜5 ⌃⇧Z/X/C/V/B（⌃⇧G は別アプリが使用中のため）。manifest の初期キーは S/D/F のまま |
+| 残作業 | 旧実装 `sidebar.js` / `style.css` の削除（manifest からは外してあり、読み込まれない） |
 
 ---
 
@@ -36,14 +38,34 @@ npm test
 ## コード変更後の確認手順
 
 1. `npm test` でユニットテストが全通過することを確認
-2. `chrome://extensions/` の「更新」ボタンで拡張機能を再読み込み
-3. 通常ページでサイドバーが表示されることを確認
-4. iframe を含むページ（YouTube 等）で重複表示されないことを確認
-5. SPA（Gmail、Google Maps 等）でサイドバーが正常動作することを確認
+2. `chrome://extensions/` の「更新」ボタンで拡張機能を再読み込み。Service Worker のエラー表示が無いこと。**ショートカットの初期キーを変えたときは、`chrome://extensions/shortcuts` で旧割り当てを消してから入れ直す**（Chrome はコマンド名ごとに古い割り当てを保持し、初期キーより優先する。実際の割り当ては `~/Library/Application Support/Google/Chrome/Default/Preferences` の `extensions.commands` で読める）
+3. `chrome://extensions/shortcuts` で、開閉が ⌃⇧A、ブックマーク1〜3が ⌃⇧S/D/F になっていること（⌘ になっていたら設定し直す）
+4. ツールバーアイコンとショートカット（Control+Shift+A）の両方で、サイドパネルが開閉すること
+5. 新しいタブ画面・Google Docs・Google スプレッドシートで、サイドパネルを閉じたまま Control+Shift+S/D/F でブックマークが開くこと
+6. 同じサイトのタブが開いているときは、新しいタブを作らずにそのタブへ移動すること
+7. 追加（ドロップ・ファイル選択・Enter キー）、右クリック削除（確認ダイアログ）、ドラッグ並べ替えができること
+8. ウィンドウを2つ開き、それぞれでパネルの開閉が独立して動くこと
+9. パネルを開いたまま1分以上待ってから Control+Shift+A を押し、1回で閉じること（Service Worker の停止対策の確認）
+10. パネルをできるだけ狭くして、アイコンが格子状に並ぶこと（最小幅を記録する）
 
 ---
 
 ## 変更履歴
+
+### 2026-10-13: サイドパネル型に作り直し（v2.0）
+
+ページに注入していたサイドバーを、Chrome のサイドパネル（`chrome.sidePanel`）に移した。
+
+| 対象ファイル | 変更内容 |
+|---|---|
+| `manifest.json` | `sidePanel` 権限と `side_panel` を追加、`content_scripts` を削除。`toggle-side-panel` コマンドを追加し、ショートカットを A=開閉 / S・D・F=ブックマーク1〜3 / 4・5番目=手動設定に再割り当て。Mac 用に `MacCtrl` を併記 |
+| `background.js` | タブを開く処理（2か所に重複）を `openBookmarkURL` に一本化。サイドパネル開閉と、ポートによる開いているウィンドウの把握を追加。`findReusableTab` / `parsePanelPortName` / `updatePanelCount` を純粋関数として切り出し。パネルへ結果（ok）を返す |
+| `sidepanel.html` / `sidepanel.js` / `sidepanel.css` | 新規。格子状のアイコン一覧・追加フォーム・右クリック削除（`<dialog>` で確認）・並べ替え。設定済みのショートカットをアイコンの説明に表示 |
+| `tests/background.test.js` | `findReusableTab` / `parsePanelPortName` / `updatePanelCount` のテストを追加（15件） |
+
+**廃止した機能**: 不透明度の切り替え（Ctrl+Shift+＋/−）、`` Ctrl+Shift+` `` の開閉、表示状態の記憶（`sidebarVisible`）、iframe ガード・SPA 対応。いずれもページ注入型でのみ必要だったもの。
+
+**ショートカットが効かなかった原因**: manifest の `Ctrl` は Mac では Command キーに解釈される。そのため、Control+Shift+A/S/D/F を押しても反応しなかった。⌘+Shift+A は Chrome のタブ検索に取られていた。`"mac": "MacCtrl+..."` を併記して解消した（2026-04-01 の記録の「根本原因」は、この点を見落としていた）。
 
 ### 2026-04-01: キーボードショートカットを manifest commands 方式に移行
 
@@ -53,8 +75,6 @@ Chrome 組み込みショートカットとの競合により `Ctrl+Shift+A/S/D/
 |---|---|
 | `manifest.json` | `commands` セクションを追加。`open-bookmark-1〜4` に `suggested_key` を設定。`open-bookmark-5` は Chrome の4コマンド上限のため `suggested_key` なし（ユーザーが手動設定） |
 | `background.js` | `chrome.commands.onCommand` ハンドラを追加。ブックマーク開閉ロジックは既存の `getOriginPrefix` / `chooseMostRecentTab` を再利用 |
-
-**根本原因**: `Ctrl+Shift+A`（Search Tabs）等は Chrome がブラウザレベルで先取りするため、content script の `keydown` リスナーに届かない。`manifest.json` に `commands` を定義することで拡張機能コマンドが優先される。
 
 ### 2026-03-31: コードレビューに基づくセキュリティ・品質修正
 

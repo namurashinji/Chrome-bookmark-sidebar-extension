@@ -1,8 +1,8 @@
 name: Chrome-bookmark-sidebar-extension
-purpose: "全ページの左端に常時表示する、カスタムアイコン付きブックマークサイドバーの Chrome 拡張（最大12件・ショートカットで開く）"
+purpose: "Chrome のサイドパネルにカスタムアイコン付きブックマークを並べる拡張（Sidekick のアプリドック風・最大12件・ショートカットで開く）"
 category: [devtools]
 status: active
 machine: macbook-pro-2024
 stack: [javascript, chrome-extension, jest]
 entrypoint: "manifest.json（Manifest V3）"
-summary_source: human
+summary_source: ai

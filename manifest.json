@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Custom Bookmark Sidebar",
-  "version": "1.0",
-  "description": "ページ左端に固定表示されるカスタムブックマークサイドバー",
+  "version": "2.0",
+  "description": "サイドパネルに表示するカスタムブックマーク。ショートカットで即座に開ける",
+  "minimum_chrome_version": "141",
   "icons": {
     "16": "icon.png",
     "48": "icon.png",
@@ -10,7 +11,8 @@
   },
   "permissions": [
     "storage",
-    "tabs"
+    "tabs",
+    "sidePanel"
   ],
   "background": {
     "service_worker": "background.js"
@@ -21,32 +23,30 @@
       "48": "icon.png",
       "128": "icon.png"
     },
-    "default_title": "Bookmark Sidebar をトグル"
+    "default_title": "Bookmark Sidebar を開閉"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["utils.js", "sidebar.js"],
-      "css": ["style.css"],
-      "run_at": "document_end"
-    }
-  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "commands": {
+    "toggle-side-panel": {
+      "suggested_key": { "default": "Ctrl+Shift+A", "mac": "MacCtrl+Shift+A" },
+      "description": "サイドパネルを開閉"
+    },
     "open-bookmark-1": {
-      "suggested_key": { "default": "Ctrl+Shift+A" },
+      "suggested_key": { "default": "Ctrl+Shift+S", "mac": "MacCtrl+Shift+S" },
       "description": "ブックマーク1番目を開く"
     },
     "open-bookmark-2": {
-      "suggested_key": { "default": "Ctrl+Shift+S" },
+      "suggested_key": { "default": "Ctrl+Shift+D", "mac": "MacCtrl+Shift+D" },
       "description": "ブックマーク2番目を開く"
     },
     "open-bookmark-3": {
-      "suggested_key": { "default": "Ctrl+Shift+D" },
+      "suggested_key": { "default": "Ctrl+Shift+F", "mac": "MacCtrl+Shift+F" },
       "description": "ブックマーク3番目を開く"
     },
     "open-bookmark-4": {
-      "suggested_key": { "default": "Ctrl+Shift+F" },
-      "description": "ブックマーク4番目を開く"
+      "description": "ブックマーク4番目を開く（chrome://extensions/shortcuts で手動設定。推奨: Ctrl+Shift+G）"
     },
     "open-bookmark-5": {
       "description": "ブックマーク5番目を開く（chrome://extensions/shortcuts で手動設定）"
