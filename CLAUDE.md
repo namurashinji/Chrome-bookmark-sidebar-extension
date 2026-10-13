@@ -40,7 +40,7 @@ Web ページへのスクリプト注入（content script）はしない。
 | `manifest.json` | 拡張機能メタ情報 | MV3、`minimum_chrome_version: 141`。パーミッション: `storage`, `tabs`, `sidePanel` |
 | `background.js` | Service Worker | タブを開く処理（`openBookmarkURL` に一本化）、ショートカット（`onCommand`）、サイドパネル開閉 |
 | `sidepanel.html` / `sidepanel.js` / `sidepanel.css` | サイドパネルの UI | アイコン一覧（格子状）・追加フォーム・右クリック削除・並べ替え |
-| `utils.js` | ユーティリティ | Chrome API 非依存の純粋関数（`isValidURL` / `removeAtIndex` / `moveItem` / `appendItem`）。`sidepanel.html` から通常の `<script>` で先に読み込む |
+| `utils.js` | ユーティリティ | Chrome API 非依存の純粋関数（`isValidURL` / `removeAtIndex` / `moveItem` / `appendItem` / `findNearestIndex`）。`sidepanel.html` から通常の `<script>` で先に読み込む |
 | `tests/utils.test.js` | ユニットテスト | `utils.js` の純粋関数 |
 | `tests/background.test.js` | ユニットテスト | `background.js` の純粋関数（URL 検証・タブ選択・ポート名の解釈） |
 
@@ -76,6 +76,11 @@ bookmarks: [
 - 開いているウィンドウは、パネルからの `runtime.connect` ポート（名前 `sidepanel:<windowId>`）で background が把握する。パネルを閉じるとポートが切れる。パネルの再読み込みで新旧のポートが重なっても取り違えないよう、ウィンドウごとに本数で数える（`updatePanelCount`）
 - Service Worker は約30秒操作が無いと停止し、状態が消える。パネルは開いている間 20 秒ごとにポートで ping を送り、停止を防ぐ。それでも切断されたら 500ms 後につなぎ直す
 - `onCommand` の時点で状態を同期的に読めることが前提（ストレージから読むと `await` が要り、`open()` が失敗する）
+
+### 並べ替え（sidepanel.js）
+- ブラウザ標準のドラッグ&ドロップ（`draggable` / `dragstart` / `drop`）は使わない。サイドパネルで並べ替えができなかったため、pointer イベント（押す・動かす・離す）を自前で追う（2026-10-13）
+- 離した位置にいちばん近いアイコンへ移動する（`utils.js` の `findNearestIndex`）。一覧の外で離したら取りやめ
+- 5px 未満の動きはクリック扱い。ポインターの固定（`setPointerCapture`）は動き始めてから行う。押した時点で固定すると click の対象が一覧全体にすり替わり、アイコンのクリックでサイトが開かなくなる
 
 ### Manifest V3
 - background は `service_worker` のみ。リスナーはトップレベルで同期的に登録する

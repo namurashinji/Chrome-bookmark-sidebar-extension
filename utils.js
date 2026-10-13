@@ -52,7 +52,27 @@ function appendItem(arr, item) {
   return [...arr, item];
 }
 
+/**
+ * 点 (x, y) にいちばん近い中心点の番号を返す（並べ替えのドロップ位置の判定に使う）
+ * @param {{x: number, y: number}[]} centers
+ * @param {number} x
+ * @param {number} y
+ * @returns {number|null} centers が空なら null。同じ距離なら先の番号
+ */
+function findNearestIndex(centers, x, y) {
+  let best = null;
+  let bestDist = Infinity;
+  centers.forEach((c, i) => {
+    const dist = (c.x - x) ** 2 + (c.y - y) ** 2;
+    if (dist < bestDist) {
+      best = i;
+      bestDist = dist;
+    }
+  });
+  return best;
+}
+
 // Node.js（テスト環境）向けエクスポート
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { isValidURL, removeAtIndex, moveItem, appendItem };
+  module.exports = { isValidURL, removeAtIndex, moveItem, appendItem, findNearestIndex };
 }

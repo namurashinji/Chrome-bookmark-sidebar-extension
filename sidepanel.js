@@ -1,5 +1,5 @@
 // sidepanel.js - サイドパネルの UI（アイコン一覧・追加・削除・並べ替え）
-// utils.js を先に読み込む前提（isValidURL / removeAtIndex / moveItem / appendItem）
+// utils.js を先に読み込む前提（isValidURL / removeAtIndex / moveItem / appendItem / findNearestIndex）
 
 const STORAGE_BOOKMARKS = 'bookmarks';
 const MAX_BOOKMARKS     = 12;
@@ -7,6 +7,7 @@ const MAX_FILE_SIZE     = 300 * 1024; // 300KB
 const PANEL_PORT_PREFIX = 'sidepanel:'; // background.js と同じ値
 const RECONNECT_DELAY   = 500;          // ms
 const KEEPALIVE_PERIOD  = 20 * 1000;    // ms。Service Worker の停止（約30秒の無操作）より短くする
+const DRAG_THRESHOLD    = 5;            // px。これ未満の動きはクリックとして扱う
 
 // ブックマークの並び順と manifest の commands の対応（ショートカットの表示に使う）
 const BOOKMARK_COMMANDS = [
@@ -41,8 +42,10 @@ const el = {
 
 // 追加フォームで選んだアイコン（Data URL）
 let selectedDataURL = null;
-// ドラッグ中のアイコンの番号（外部からのドロップと区別するため dataTransfer ではなくここに持つ）
-let dragFromIdx = null;
+// 並べ替えのドラッグ中の状態（{ fromIdx, startX, startY, moved, icon }）。ドラッグしていなければ null
+let drag = null;
+// ドラッグを終えた直後の click を無視するための印
+let suppressClick = false;
 
 // ─── Storage ─────────────────────────────────────────────────────────────
 
@@ -75,7 +78,7 @@ function createBookmarkIcon(bookmark, idx, shortcut) {
   img.dataset.url = bookmark.url;
   img.dataset.idx = String(idx);
   img.className   = 'bookmark';
-  img.draggable   = true;
+  img.draggable   = false; // 並べ替えは pointer イベントで自前で行う
   img.setAttribute('role', 'listitem');
   return img;
 }
@@ -148,7 +151,9 @@ async function handleDelete() {
   }
 }
 
-// ─── 並べ替え（ドラッグ&ドロップ）────────────────────────────────────────
+// ─── 並べ替え（マウスの押す・動かす・離すを自前で追う）──────────────────
+// ブラウザ標準のドラッグ&ドロップは使わない。アイコンの真上に正確に落とさないと動かず、
+// サイドパネルでは並べ替えができなかったため（2026-10-13）
 
 function getIconIdx(target) {
   if (!(target instanceof HTMLImageElement) || target.dataset.idx == null) return null;
@@ -167,8 +172,79 @@ async function reorder(from, to) {
   }
 }
 
+// 指の位置にいちばん近いアイコンの番号（アイコンのすき間に離しても決まるようにする）
+function iconIdxAt(x, y) {
+  const centers = [...el.grid.querySelectorAll('.bookmark')].map(icon => {
+    const r = icon.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  return findNearestIndex(centers, x, y);
+}
+
+function isInsideGrid(x, y) {
+  const r = el.grid.getBoundingClientRect();
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+function setDropTarget(idx) {
+  el.grid.querySelectorAll('.bookmark').forEach(icon => {
+    icon.classList.toggle('drop-target', idx != null && Number(icon.dataset.idx) === idx);
+  });
+}
+
+function endDrag() {
+  el.grid.querySelector('.dragging')?.classList.remove('dragging');
+  setDropTarget(null);
+  drag = null;
+}
+
+function setupReorderEvents() {
+  el.grid.addEventListener('pointerdown', e => {
+    // 前回のドラッグの後に click が来なかった場合でも、印を持ち越さない
+    suppressClick = false;
+    const idx = getIconIdx(e.target);
+    if (e.button !== 0 || idx == null) return;
+    drag = { fromIdx: idx, startX: e.clientX, startY: e.clientY, moved: false, icon: e.target };
+  });
+
+  el.grid.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (!drag.moved) {
+      if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+      drag.moved = true;
+      drag.icon.classList.add('dragging');
+      // 一覧の外に出ても追えるようにする。押した時点で固定すると click の対象が一覧全体に
+      // すり替わり、アイコンのクリックでサイトが開かなくなるため、動き始めてから固定する
+      try {
+        el.grid.setPointerCapture(e.pointerId);
+      } catch {
+        // ボタンがすでに離されているなど。固定できなくても一覧の中の並べ替えはできる
+      }
+    }
+    setDropTarget(isInsideGrid(e.clientX, e.clientY) ? iconIdxAt(e.clientX, e.clientY) : null);
+  });
+
+  el.grid.addEventListener('pointerup', e => {
+    if (!drag) return;
+    const { moved, fromIdx } = drag;
+    // 一覧の外で離したら取りやめ
+    const to = moved && isInsideGrid(e.clientX, e.clientY) ? iconIdxAt(e.clientX, e.clientY) : null;
+    endDrag();
+    if (!moved) return;
+    // ドラッグの直後に発生する click でサイトが開かないようにする
+    suppressClick = true;
+    reorder(fromIdx, to);
+  });
+
+  el.grid.addEventListener('pointercancel', endDrag);
+}
+
 function setupGridEvents() {
   el.grid.addEventListener('click', e => {
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
     if (getIconIdx(e.target) != null) openURL(e.target.dataset.url);
   });
 
@@ -179,37 +255,7 @@ function setupGridEvents() {
     showContextMenu(e, idx);
   });
 
-  el.grid.addEventListener('dragstart', e => {
-    dragFromIdx = getIconIdx(e.target);
-    if (dragFromIdx == null) return;
-    e.dataTransfer.effectAllowed = 'move';
-    e.target.classList.add('dragging');
-  });
-
-  el.grid.addEventListener('dragend', e => {
-    dragFromIdx = null;
-    e.target.classList?.remove('dragging');
-  });
-
-  el.grid.addEventListener('dragover', e => {
-    if (dragFromIdx == null || getIconIdx(e.target) == null) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  });
-
-  el.grid.addEventListener('dragenter', e => {
-    if (dragFromIdx != null && getIconIdx(e.target) != null) e.target.classList.add('drop-target');
-  });
-
-  el.grid.addEventListener('dragleave', e => e.target.classList?.remove('drop-target'));
-
-  el.grid.addEventListener('drop', e => {
-    const to = getIconIdx(e.target);
-    if (dragFromIdx == null || to == null) return;
-    e.preventDefault();
-    e.target.classList.remove('drop-target');
-    reorder(dragFromIdx, to);
-  });
+  setupReorderEvents();
 }
 
 // ─── 追加フォーム ────────────────────────────────────────────────────────

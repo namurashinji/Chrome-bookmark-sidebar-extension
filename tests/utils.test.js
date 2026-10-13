@@ -1,4 +1,4 @@
-const { isValidURL, removeAtIndex, moveItem, appendItem } = require('../utils');
+const { isValidURL, removeAtIndex, moveItem, appendItem, findNearestIndex } = require('../utils');
 
 // ─── isValidURL ─────────────────────────────────────────────────────────────
 
@@ -170,5 +170,33 @@ describe('appendItem', () => {
   test('追加後の配列の長さが +1 になる', () => {
     const original = [1, 2, 3];
     expect(appendItem(original, 4)).toHaveLength(4);
+  });
+});
+
+// ─── findNearestIndex ────────────────────────────────────────────────────────
+
+describe('いちばん近いアイコンの判定', () => {
+  // 2列×2行に並んだアイコンの中心
+  const centers = [{ x: 20, y: 20 }, { x: 60, y: 20 }, { x: 20, y: 64 }, { x: 60, y: 64 }];
+
+  test('アイコンの真上ならその番号', () => {
+    expect(findNearestIndex(centers, 60, 64)).toBe(3);
+  });
+
+  test('すき間でも近い方の番号', () => {
+    expect(findNearestIndex(centers, 45, 22)).toBe(1);
+    expect(findNearestIndex(centers, 22, 50)).toBe(2);
+  });
+
+  test('一覧の末尾より後ろでも最後のアイコンになる', () => {
+    expect(findNearestIndex(centers, 100, 120)).toBe(3);
+  });
+
+  test('同じ距離なら先の番号', () => {
+    expect(findNearestIndex(centers, 40, 20)).toBe(0);
+  });
+
+  test('アイコンが無ければ null', () => {
+    expect(findNearestIndex([], 10, 10)).toBeNull();
   });
 });

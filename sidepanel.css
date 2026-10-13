@@ -60,11 +60,17 @@ body {
   gap: 2px;
 }
 
+#bookmark-grid {
+  touch-action: none; /* 並べ替えのドラッグ中にスクロールさせない */
+  user-select: none;
+}
+
 .bookmark {
   width: 30px;
   height: 30px;
   object-fit: contain;
   cursor: pointer;
+  -webkit-user-drag: none;
   border-radius: 4px;
   transition: transform 0.1s, opacity 0.15s;
 }
