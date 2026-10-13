@@ -97,7 +97,7 @@
    ブックマークをグループ分けして折りたたみ表示。
 
 6. **テスト拡充 / E2E テストの導入**
-   `sidebar.js` は DOM 依存が強く Jest で直接テストできない。jsdom 環境でのテスト追加 or Playwright による E2E テストの導入。
+   `sidepanel.js` と background の Chrome API 呼び出しは Jest で直接テストできない。jsdom 環境でのテスト追加 or Playwright による E2E テストの導入。
 
 7. **TypeScript 化**
    現在は純粋 JavaScript。Vite 等のビルドステップを導入すれば TypeScript 化可能。

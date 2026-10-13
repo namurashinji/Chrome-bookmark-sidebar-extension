@@ -13,7 +13,7 @@
 - [x] 2. `background.js`: 起動時に `setPanelBehavior` を設定。タブを開く処理（2か所に重複）を1関数にまとめる
 - [x] 3. `sidepanel.html` / `sidepanel.js` / `sidepanel.css` を新規作成（アイコン一覧・追加フォーム・右クリック削除・並べ替え）
 - [x] 4. テスト: 既存テストを通す。background のタブを開く関数のテストを追加
-- [ ] 5. 旧 `sidebar.js` / `style.css` の削除（フックで止まるので名村さんに依頼）
+- [x] 5. 旧 `sidebar.js` / `style.css` の削除（名村さんが `git rm` で実施）
 - [ ] 6. 実機確認（新しいタブ・Google Docs・スプレッドシートでのショートカット、追加・削除・並べ替え、パネル最小幅）
 - [x] 7. CLAUDE.md / HANDOVER.md / README.md / PLAN.md を更新、code-reviewer でレビュー
 

@@ -16,7 +16,7 @@
 | テスト | Jest ユニットテスト 66 件 PASS（`utils.js` / `background.js` の純粋関数部分） |
 | 実機確認 | 2026-10-13 一部完了: ショートカットでの開閉、1分放置後の開閉（手順9）、2ウィンドウでの独立した開閉（手順8）。**未報告**: Google Docs 等でのブックマーク起動（手順5）、タブ再利用（6）、追加・削除・並べ替え（7）、最小幅（10） |
 | ショートカット（名村さんの環境） | 開閉 ⌃⇧A、ブックマーク1〜5 ⌃⇧Z/X/C/V/B（⌃⇧G は別アプリが使用中のため）。manifest の Mac 用初期キーもこれに合わせた（4・5番目は手動設定） |
-| 残作業 | 旧実装 `sidebar.js` / `style.css` の削除（manifest からは外してあり、読み込まれない） |
+| 残作業 | 実機確認の残り（上の「実機確認」の未報告分） |
 
 ---
 
@@ -62,6 +62,8 @@ npm test
 | `background.js` | タブを開く処理（2か所に重複）を `openBookmarkURL` に一本化。サイドパネル開閉と、ポートによる開いているウィンドウの把握を追加。`findReusableTab` / `parsePanelPortName` / `updatePanelCount` を純粋関数として切り出し。パネルへ結果（ok）を返す |
 | `sidepanel.html` / `sidepanel.js` / `sidepanel.css` | 新規。格子状のアイコン一覧・追加フォーム・右クリック削除（`<dialog>` で確認）・並べ替え。設定済みのショートカットをアイコンの説明に表示 |
 | `tests/background.test.js` | `findReusableTab` / `parsePanelPortName` / `updatePanelCount` のテストを追加（15件） |
+
+**削除したファイル**: 旧実装の `sidebar.js` / `style.css`（名村さんが `git rm` で削除。履歴から取り戻せる）。
 
 **廃止した機能**: 不透明度の切り替え（Ctrl+Shift+＋/−）、`` Ctrl+Shift+` `` の開閉、表示状態の記憶（`sidebarVisible`）、iframe ガード・SPA 対応。いずれもページ注入型でのみ必要だったもの。
 
