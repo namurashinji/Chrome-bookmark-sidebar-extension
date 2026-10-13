@@ -106,14 +106,16 @@ bookmarks: [
 
 すべて `manifest.json` の `commands` で定義し、`background.js` の `chrome.commands.onCommand` で処理する。ブラウザ側で処理されるので、Google Docs などページ側のショートカットに妨げられない。サイドパネルが閉じていてもブックマークは開ける。
 
-| コマンド | 初期キー（Mac は Control） | 動作 |
-|---|---|---|
-| `toggle-side-panel` | `Ctrl+Shift+A` | サイドパネルを開閉 |
-| `open-bookmark-1` | `Ctrl+Shift+S` | ブックマーク 1 番目を開く |
-| `open-bookmark-2` | `Ctrl+Shift+D` | ブックマーク 2 番目を開く |
-| `open-bookmark-3` | `Ctrl+Shift+F` | ブックマーク 3 番目を開く |
-| `open-bookmark-4` | なし（**要手動設定**、推奨 `Ctrl+Shift+G`） | ブックマーク 4 番目を開く |
-| `open-bookmark-5` | なし（**要手動設定**） | ブックマーク 5 番目を開く |
+| コマンド | 初期キー Mac（`MacCtrl`） | 初期キー Windows / Linux | 動作 |
+|---|---|---|---|
+| `toggle-side-panel` | `Control+Shift+A` | `Ctrl+Shift+A` | サイドパネルを開閉 |
+| `open-bookmark-1` | `Control+Shift+Z` | `Ctrl+Shift+S` | ブックマーク 1 番目を開く |
+| `open-bookmark-2` | `Control+Shift+X` | `Ctrl+Shift+D` | ブックマーク 2 番目を開く |
+| `open-bookmark-3` | `Control+Shift+C` | `Ctrl+Shift+F` | ブックマーク 3 番目を開く |
+| `open-bookmark-4` | なし（**要手動設定**、推奨 `Control+Shift+V`） | なし（要手動設定） | ブックマーク 4 番目を開く |
+| `open-bookmark-5` | なし（**要手動設定**、推奨 `Control+Shift+B`） | なし（要手動設定） | ブックマーク 5 番目を開く |
+
+Mac と Windows でキーを分けている理由（2026-10-13）: Mac の初期キーは名村さんの実際の割り当てに合わせた（`Control+Shift+G` は別アプリが使用中）。Windows で Z/X/C/V にすると、`Ctrl+Shift+C`（開発者ツール）・`Ctrl+Shift+V`（書式なし貼り付け）が Chrome 側で優先されて効かないため、S/D/F のままにした。
 
 ### Mac では `MacCtrl` を明示する（2026-10-13 教訓）
 manifest の `Ctrl` は **Mac では Command キー** に解釈される。Control キーにしたいときは `"mac": "MacCtrl+Shift+A"` を併記する。これを書かなかったため、Control+Shift+A を押しても反応せず、⌘+Shift+A は Chrome のタブ検索に取られていた。

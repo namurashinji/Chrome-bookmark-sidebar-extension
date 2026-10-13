@@ -54,6 +54,8 @@
 
 **決定**: `suggested_key` に `"mac": "MacCtrl+Shift+..."` を併記する。
 
+**追記（同日）**: 名村さんの環境では `Control+Shift+G` を別アプリが使っているため、ブックマークは Z/X/C/V/B に手動で割り当てた。Mac の初期キーもこれに合わせ、Z/X/C（4・5番目は V/B を推奨）にした。Windows は `Ctrl+Shift+C`（開発者ツール）・`Ctrl+Shift+V`（書式なし貼り付け）が Chrome 側で優先されて効かないため、S/D/F のままにした。
+
 ### 決定 1: キーボードショートカットを manifest commands 方式に移行（2026-04-01）
 
 **問題**: `Ctrl+Shift+A/S/D/F/G` は Chrome がブラウザレベルで先取り処理するため、`capture: true` の content script keydown リスナーでも捕捉できなかった。

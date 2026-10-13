@@ -15,17 +15,18 @@ Chrome のサイドパネルに、カスタムアイコン付きのブックマ�
 
 ## キーボードショートカット
 
-| ショートカット（Mac は Control キー） | 動作 |
-|---|---|
-| `Ctrl+Shift+A` | サイドパネルを開閉 |
-| `Ctrl+Shift+S` | ブックマーク 1 番目を開く |
-| `Ctrl+Shift+D` | ブックマーク 2 番目を開く |
-| `Ctrl+Shift+F` | ブックマーク 3 番目を開く |
-| （手動設定。推奨 `Ctrl+Shift+G`） | ブックマーク 4 番目を開く |
-| （手動設定） | ブックマーク 5 番目を開く |
+| Mac | Windows / Linux | 動作 |
+|---|---|---|
+| `Control+Shift+A` | `Ctrl+Shift+A` | サイドパネルを開閉 |
+| `Control+Shift+Z` | `Ctrl+Shift+S` | ブックマーク 1 番目を開く |
+| `Control+Shift+X` | `Ctrl+Shift+D` | ブックマーク 2 番目を開く |
+| `Control+Shift+C` | `Ctrl+Shift+F` | ブックマーク 3 番目を開く |
+| 手動設定（推奨 `Control+Shift+V`） | 手動設定 | ブックマーク 4 番目を開く |
+| 手動設定（推奨 `Control+Shift+B`） | 手動設定 | ブックマーク 5 番目を開く |
 
 > Chrome では、拡張機能が初期値として指定できるショートカットは 4 つまでです。4・5 番目は `chrome://extensions/shortcuts` で設定してください。
 > 設定したショートカットは、アイコンにマウスを重ねたときの説明に表示されます。
+> Windows で Z/X/C/V を使わないのは、Ctrl+Shift+C（開発者ツール）・Ctrl+Shift+V（書式なし貼り付け）が Chrome 側で優先され、効かないためです。
 
 ## インストール（開発版）
 
